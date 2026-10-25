@@ -1,0 +1,437 @@
+{
+  "info": {
+    "name": "UploadHub Auth API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "Run top to bottom. Register/login requests save the token automatically."
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:4000"
+    },
+    {
+      "key": "token",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "GET /api/health",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "auth": {
+          "type": "noauth"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/health",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "health"
+          ]
+        },
+        "description": ""
+      },
+      "event": []
+    },
+    {
+      "name": "POST /api/auth/register/user",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "auth": {
+          "type": "noauth"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/auth/register/user",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "auth",
+            "register",
+            "user"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Ada Obi\",\n  \"email\": \"ada@example.com\",\n  \"password\": \"Password1\"\n}"
+        },
+        "description": ""
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const d = pm.response.json().data;",
+              "if (d && d.token) pm.collectionVariables.set(\"token\", d.token);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "POST /api/auth/register/admin",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "auth": {
+          "type": "noauth"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/auth/register/admin",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "auth",
+            "register",
+            "admin"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Bo Eze\",\n  \"email\": \"bo@example.com\",\n  \"password\": \"Password1\",\n  \"departmentName\": \"Physics\",\n  \"departmentCode\": \"PHY\"\n}"
+        },
+        "description": "Expect 503 DEPARTMENT_SERVICE_NOT_CONNECTED until the department service exists."
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const d = pm.response.json().data;",
+              "if (d && d.token) pm.collectionVariables.set(\"token\", d.token);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "POST /api/auth/login",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "auth": {
+          "type": "noauth"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/auth/login",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "auth",
+            "login"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"ada@example.com\",\n  \"password\": \"Password1\",\n  \"expectedRole\": \"user\"\n}"
+        },
+        "description": ""
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const d = pm.response.json().data;",
+              "if (d && d.token) pm.collectionVariables.set(\"token\", d.token);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "POST /api/auth/login",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "auth": {
+          "type": "noauth"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/auth/login",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "auth",
+            "login"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"ada@example.com\",\n  \"password\": \"Password1\",\n  \"expectedRole\": \"admin\"\n}"
+        },
+        "description": "Expect 403 WRONG_ACCOUNT_TYPE."
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const d = pm.response.json().data;",
+              "if (d && d.token) pm.collectionVariables.set(\"token\", d.token);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "POST /api/auth/forgot-password",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "auth": {
+          "type": "noauth"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/auth/forgot-password",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "auth",
+            "forgot-password"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"ada@example.com\"\n}"
+        },
+        "description": "In dev the reset link is printed in the backend terminal."
+      },
+      "event": []
+    },
+    {
+      "name": "POST /api/auth/reset-password",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "auth": {
+          "type": "noauth"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/auth/reset-password",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "auth",
+            "reset-password"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"token\": \"paste-token-from-terminal-link\",\n  \"password\": \"NewPassw0rd\"\n}"
+        },
+        "description": ""
+      },
+      "event": []
+    },
+    {
+      "name": "GET /api/users/me",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{token}}",
+              "type": "string"
+            }
+          ]
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/users/me",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "users",
+            "me"
+          ]
+        },
+        "description": ""
+      },
+      "event": []
+    },
+    {
+      "name": "PATCH /api/users/me",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{token}}",
+              "type": "string"
+            }
+          ]
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/users/me",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "users",
+            "me"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Ada Nwosu\",\n  \"notificationPreferences\": {\n    \"securityAlerts\": false\n  }\n}"
+        },
+        "description": ""
+      },
+      "event": []
+    },
+    {
+      "name": "PATCH /api/users/me",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{token}}",
+              "type": "string"
+            }
+          ]
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/users/me",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "users",
+            "me"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"role\": \"admin\"\n}"
+        },
+        "description": "Expect 400 FIELD_NOT_ALLOWED."
+      },
+      "event": []
+    },
+    {
+      "name": "POST /api/users/me/password",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{token}}",
+              "type": "string"
+            }
+          ]
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/users/me/password",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "users",
+            "me",
+            "password"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"currentPassword\": \"Password1\",\n  \"newPassword\": \"NewPassw0rd\"\n}"
+        },
+        "description": ""
+      },
+      "event": []
+    }
+  ]
+}
