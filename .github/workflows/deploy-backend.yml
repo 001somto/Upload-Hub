@@ -1,0 +1,115 @@
+name: Deploy UploadHub Backend
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "backend/**"
+      - ".github/workflows/deploy-backend.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Run Backend Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install backend dependencies
+        working-directory: backend
+        run: npm ci
+
+      - name: Run test suite
+        working-directory: backend
+        run: npm test
+        env:
+          NODE_ENV: test
+          STORAGE_MODE: memory
+          JWT_SECRET: ci-test-secret-that-is-long-enough-32chars
+          SESSION_HOURS: 8
+
+  deploy:
+    name: Deploy to EC2
+    runs-on: ubuntu-latest
+    needs: test
+
+    steps:
+      - name: Deploy backend to EC2
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ubuntu
+          key: ${{ secrets.EC2_SSH_KEY }}
+          fingerprint: ${{ secrets.EC2_FINGERPRINT }}
+          port: 22
+          command_timeout: 10m
+
+          script: |
+            set -e
+
+            # Load NVM if installed
+            export NVM_DIR="$HOME/.nvm"
+            if [ -s "$NVM_DIR/nvm.sh" ]; then
+              . "$NVM_DIR/nvm.sh"
+            fi
+
+            cd /home/ubuntu/Upload-Hub
+
+            # Pull latest code from GitHub
+            git fetch origin main
+            git reset --hard origin/main
+
+            cd backend
+
+            # Safety check — .env must exist on the server
+            if [ ! -f .env ]; then
+              echo "ERROR: backend/.env is missing on EC2. Create it manually and re-run."
+              exit 1
+            fi
+
+            # Install only production dependencies
+            if [ -f package-lock.json ]; then
+              npm ci --production
+            else
+              npm install --production
+            fi
+
+            # Gracefully reload if already running, otherwise start fresh
+            if pm2 describe uploadhub-backend > /dev/null 2>&1; then
+              pm2 reload uploadhub-backend --update-env
+            else
+              pm2 start npm --name uploadhub-backend -- start
+            fi
+
+            # Wait for process to initialise
+            sleep 5
+
+            # Check the process is actually online
+            STATUS=$(pm2 jlist | node -e "
+              const list = JSON.parse(require('fs').readFileSync('/dev/stdin', 'utf8'));
+              const app = list.find(p => p.name === 'uploadhub-backend');
+              console.log(app ? app.pm2_env.status : 'not_found');
+            ")
+
+            if [ "$STATUS" != "online" ]; then
+              echo "Deployment FAILED — process status: $STATUS"
+              pm2 logs uploadhub-backend --lines 50 --nostream
+              exit 1
+            fi
+
+            echo "Deployment SUCCESSFUL — status: $STATUS"
+            pm2 save
+            pm2 status
