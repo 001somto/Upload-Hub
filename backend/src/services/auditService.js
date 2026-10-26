@@ -5,9 +5,14 @@ import crypto from "crypto";
 import { forbidden } from "../utils/errors.js";
 
 export function createAuditService({ auditRepo, users }) {
+  let lastTimestampMs = 0;
+
   return {
     async record({ userId, userName, userRole = "user", departmentId = null, action, target = "" }) {
       if (!userId || !action) return;
+      const timestampMs = Math.max(Date.now(), lastTimestampMs + 1);
+      lastTimestampMs = timestampMs;
+
       const entry = {
         logId: crypto.randomUUID(),
         userId,
@@ -16,7 +21,7 @@ export function createAuditService({ auditRepo, users }) {
         departmentId: departmentId || null,
         action,
         target: target || "",
-        timestamp: new Date().toISOString(),
+        timestamp: new Date(timestampMs).toISOString(),
       };
       try {
         await auditRepo.record(entry);
