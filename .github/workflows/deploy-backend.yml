@@ -66,7 +66,7 @@ jobs:
               . "$NVM_DIR/nvm.sh"
             fi
 
-            cd /home/ubuntu/Upload-Hub
+            cd /home/ubuntu/upload-Hub || cd /home/ubuntu/Upload-Hub
 
             # Pull latest code from GitHub
             git fetch origin main
