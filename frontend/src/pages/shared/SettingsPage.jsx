@@ -146,7 +146,7 @@ function ProfileCard() {
           <dt className="text-muted">Department</dt>
           <dd className="mt-0.5 flex flex-wrap items-center gap-2">
             <Badge tone={membership.tone}>{membership.label}</Badge>
-            <span className="text-muted">{membership.help}</span>
+            <span className="text-muted">{user.role === "admin" ? "You are an admin of this department." : membership.help}</span>
           </dd>
         </div>
       </dl>

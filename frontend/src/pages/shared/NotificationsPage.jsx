@@ -6,6 +6,7 @@
 // page only shows notifications the backend has stored, and never claims an email was sent.
 // STATUS: PROVISIONAL endpoints (api.notifications.*).
 
+import { RefreshCw } from "../../lib/icons";
 import { useState } from "react";
 import Badge from "../../components/ui/Badge";
 import Button from "../../components/ui/Button";
@@ -52,6 +53,10 @@ export default function NotificationsPage() {
           <>
             <Button to={settingsPath} variant="secondary">
               Notification settings
+            </Button>
+            <Button variant="soft" loading={result.status === "loading"} onClick={() => result.reload()} title="Refresh notifications">
+              <RefreshCw className="h-4 w-4 mr-1" />
+              Refresh
             </Button>
             <Button variant="soft" disabled={unread === 0} loading={busy} onClick={() => markRead({ all: true })}>
               Mark all as read

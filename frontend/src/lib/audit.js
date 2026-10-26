@@ -1,8 +1,7 @@
 // lib/audit.js
 // WHAT THIS FILE IS: the readable names for the events the audit trail records.
 // WHAT IT DOES: turns an event code like "file.uploaded" into "File uploaded", and gives
-// the filter drop-down on the Audit trail page its list. The codes are PROVISIONAL:
-// agree the final list with the backend teammate and edit it here.
+// the filter drop-down on the Audit trail page its list.
 
 export const AUDIT_ACTIONS = [
   { key: "account.created", label: "Account created" },
@@ -22,6 +21,11 @@ export const AUDIT_ACTIONS = [
   { key: "membership.rejected", label: "Join request rejected" },
   { key: "membership.removed", label: "Member removed" },
   { key: "membership.left", label: "Member left" },
+  { key: "member.approved", label: "Member approved" },
+  { key: "member.rejected", label: "Member rejected" },
+  { key: "member.removed", label: "Member removed" },
+  { key: "member.paused", label: "Member access paused" },
+  { key: "member.restored", label: "Member access restored" },
   { key: "share.created", label: "Share link created" },
   { key: "share.revoked", label: "Share link revoked" },
 ];

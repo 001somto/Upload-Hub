@@ -74,7 +74,7 @@ export default function SharePage() {
               if (link.state === "requiresSignIn" && !signedIn)
                 return (
                   <Message icon={Lock} tone="bg-leaf-100 text-leaf-700" title="Sign in to open this">
-                    <p>The person who shared this wants viewers to have an account.</p>
+                    <p>The person who shared this wants viewers to create an account.</p>
                     <div className="mt-6 grid gap-2">
                       <Button to="/signin/user" state={from}>
                         Sign in

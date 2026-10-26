@@ -10,7 +10,7 @@ import { toPublicUser } from "./userShape.js";
 
 const ALLOWED_PROFILE_FIELDS = ["name", "notificationPreferences", "profilePhotoKey"];
 
-export function createUserService({ users, tokens, storage }) {
+export function createUserService({ users, tokens, storage, notificationService, auditService }) {
   return {
     publicUser: (user) => toPublicUser(user, storage),
 
@@ -45,6 +45,19 @@ export function createUserService({ users, tokens, storage }) {
       if (Object.keys(real).length) throw badRequest("Please fix the highlighted fields.", real);
 
       const updated = await users.update(user.userId, changes);
+
+      if (notificationService) {
+        if ("profilePhotoKey" in changes) {
+          notificationService.send({ userId: user.userId, type: "account", message: "Your profile photo was updated successfully." });
+        }
+        if ("name" in changes) {
+          notificationService.send({ userId: user.userId, type: "account", message: "Your full name was updated." });
+        }
+        if ("notificationPreferences" in changes) {
+          notificationService.send({ userId: user.userId, type: "account", message: "Your notification preferences have been saved." });
+        }
+      }
+
       return toPublicUser(updated, storage);
     },
 
@@ -61,6 +74,14 @@ export function createUserService({ users, tokens, storage }) {
         passwordHash: await bcrypt.hash(newPassword, 12),
         tokenVersion: (user.tokenVersion || 0) + 1, // signs out other devices
       });
+
+      if (notificationService) {
+        notificationService.send({ userId: user.userId, type: "security", message: "Your account password was successfully changed." });
+      }
+      if (auditService) {
+        auditService.record({ userId: user.userId, userName: user.name, userRole: user.role, action: "auth.passwordChanged", target: "Account password" });
+      }
+
       return { message: "Your password has been changed.", token: tokens.sign(updated) };
     },
   };

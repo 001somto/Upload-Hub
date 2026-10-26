@@ -1,16 +1,7 @@
 // gateways/departmentGateway.js
-// WHAT THIS FILE IS: the doorway between accounts (this part) and departments (teammate's part).
-// WHAT IT DOES: Admin sign-up must create a department. That belongs to the backend teammate,
-// so this file only defines the doorway. Until the teammate plugs in a real one, it answers
-// "department service not connected" (HTTP 503) and Admin sign-up stops cleanly, creating
-// nothing. No fake department is ever made.
-//
-// HOW THE TEAMMATE PLUGS IN: pass your own gateway to createApp({ departments: myGateway })
-// in src/server.js. It needs two functions:
-//   isConnected() -> true
-//   createDepartment({ name, code, adminUserId }) -> { departmentId }
-//     (throw AppError 409 code "DEPARTMENT_CODE_TAKEN" when the code is already used)
+// Handles department creation during admin registration.
 
+import crypto from "crypto";
 import { AppError } from "../utils/errors.js";
 
 export function createNotConnectedDepartmentGateway() {
@@ -18,6 +9,28 @@ export function createNotConnectedDepartmentGateway() {
     isConnected: () => false,
     async createDepartment() {
       throw new AppError(503, "DEPARTMENT_SERVICE_NOT_CONNECTED", "Admin registration needs the department service, which is not connected yet.");
+    },
+  };
+}
+
+export function createDepartmentGateway(departmentsRepo) {
+  return {
+    isConnected: () => true,
+    async createDepartment({ name, code, adminUserId }) {
+      const existing = await departmentsRepo.findByCode(code);
+      if (existing) {
+        throw new AppError(409, "DEPARTMENT_CODE_TAKEN", "That department code is already in use.");
+      }
+      const departmentId = crypto.randomUUID();
+      await departmentsRepo.create({
+        departmentId,
+        name: name.trim(),
+        code: code.trim().toUpperCase(),
+        adminUserId,
+        visibleInDirectory: true,
+        createdAt: new Date().toISOString(),
+      });
+      return { departmentId };
     },
   };
 }

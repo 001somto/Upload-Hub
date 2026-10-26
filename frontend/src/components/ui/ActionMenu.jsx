@@ -1,56 +1,127 @@
 // components/ui/ActionMenu.jsx
-// WHAT THIS FILE IS: the small "Actions" drop-down shown at the end of table and file rows.
-// WHAT IT DOES: a button that opens a list of actions. `items` is a list of
-// { label, icon, onClick, tone } objects (tone "danger" makes an action red). Hidden items
-// (`hidden: true`) are left out. Escape or a click outside closes it. `label` names the row
-// for screen readers, e.g. "Actions for report.pdf".
+// Actions drop-down shown at the end of table and file rows.
+// Uses React Portal and viewport-aware fixed coordinates to avoid being clipped by overflow containers.
 
-import { useRef, useState } from "react";
-import useClickOutside from "../../hooks/useClickOutside";
+import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { ChevronDown } from "../../lib/icons";
 
 export default function ActionMenu({ label, items }) {
   const [open, setOpen] = useState(false);
-  const ref = useRef(null);
-  useClickOutside(ref, () => setOpen(false), open);
+  const [menuPosition, setMenuPosition] = useState(null);
+  const buttonRef = useRef(null);
+  const menuRef = useRef(null);
 
   const visible = items.filter((item) => !item.hidden);
+
+  useEffect(() => {
+    if (!open) return undefined;
+
+    function handleClickOutside(event) {
+      if (
+        (menuRef.current && menuRef.current.contains(event.target)) ||
+        (buttonRef.current && buttonRef.current.contains(event.target))
+      ) {
+        return;
+      }
+      setOpen(false);
+    }
+
+    function handleKeyDown(event) {
+      if (event.key === "Escape") setOpen(false);
+    }
+
+    function handleResize() {
+      setOpen(false);
+    }
+
+    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("keydown", handleKeyDown);
+    window.addEventListener("resize", handleResize);
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("resize", handleResize);
+    };
+  }, [open]);
+
   if (visible.length === 0) return null;
 
+  function toggle() {
+    if (!open && buttonRef.current) {
+      const rect = buttonRef.current.getBoundingClientRect();
+      const menuWidth = 208; // 13rem / w-52
+      const spaceBelow = window.innerHeight - rect.bottom;
+      const openUp = spaceBelow < 220 && rect.top > 220;
+
+      let left = rect.right - menuWidth;
+      if (left < 8) left = 8;
+      if (left + menuWidth > window.innerWidth - 8) {
+        left = window.innerWidth - menuWidth - 8;
+      }
+
+      setMenuPosition({
+        top: openUp ? `${rect.top - 6}px` : `${rect.bottom + 6}px`,
+        left: `${left}px`,
+        transform: openUp ? "translateY(-100%)" : "none",
+      });
+      setOpen(true);
+    } else {
+      setOpen(false);
+    }
+  }
+
   return (
-    <div ref={ref} className="relative shrink-0">
+    <div className="relative inline-block text-left">
       <button
+        ref={buttonRef}
         type="button"
-        onClick={() => setOpen((value) => !value)}
+        onClick={toggle}
         aria-haspopup="menu"
         aria-expanded={open}
         aria-label={label}
-        className="inline-flex h-9 items-center gap-1 rounded-xl border border-line bg-white px-2.5 text-sm font-medium text-ink transition hover:border-leaf-300 hover:bg-leaf-50"
+        className="inline-flex h-9 items-center gap-1 rounded-xl border border-line bg-white px-2.5 text-sm font-medium text-ink transition hover:border-leaf-300 hover:bg-leaf-50 focus:outline-none focus:ring-2 focus:ring-leaf-500"
       >
         <span className="hidden sm:inline">Actions</span>
         <ChevronDown className="h-4 w-4" aria-hidden="true" />
       </button>
-      {open ? (
-        <div role="menu" className="absolute right-0 top-full z-30 mt-1.5 w-52 animate-pop rounded-2xl border border-line bg-white p-1.5 shadow-lift">
-          {visible.map(({ label: itemLabel, icon: Icon, onClick, tone }) => (
-            <button
-              key={itemLabel}
-              type="button"
-              role="menuitem"
-              onClick={() => {
-                setOpen(false);
-                onClick();
+
+      {open && menuPosition && typeof document !== "undefined"
+        ? createPortal(
+            <div
+              ref={menuRef}
+              role="menu"
+              style={{
+                position: "fixed",
+                top: menuPosition.top,
+                left: menuPosition.left,
+                transform: menuPosition.transform,
+                zIndex: 9999,
               }}
-              className={`flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-left text-sm font-medium transition ${
-                tone === "danger" ? "text-red-700 hover:bg-red-50" : "text-ink hover:bg-leaf-100"
-              }`}
+              className="w-52 animate-pop rounded-2xl border border-line bg-white p-1.5 shadow-lift"
             >
-              {Icon ? <Icon className="h-4 w-4" aria-hidden="true" /> : null}
-              {itemLabel}
-            </button>
-          ))}
-        </div>
-      ) : null}
+              {visible.map(({ label: itemLabel, icon: Icon, onClick, tone }) => (
+                <button
+                  key={itemLabel}
+                  type="button"
+                  role="menuitem"
+                  onClick={() => {
+                    setOpen(false);
+                    onClick();
+                  }}
+                  className={`flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-left text-sm font-medium transition ${
+                    tone === "danger" ? "text-red-700 hover:bg-red-50" : "text-ink hover:bg-leaf-100"
+                  }`}
+                >
+                  {Icon ? <Icon className="h-4 w-4" aria-hidden="true" /> : null}
+                  {itemLabel}
+                </button>
+              ))}
+            </div>,
+            document.body
+          )
+        : null}
     </div>
   );
 }

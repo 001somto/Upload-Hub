@@ -217,7 +217,7 @@ export default function MembersPage() {
           {(data) => (
             <Card padded={false}>
               <div className="overflow-x-auto">
-                <table className="w-full min-w-[34rem] text-left text-sm">
+                <table className="w-full min-w-[40rem] text-left text-sm">
                   <thead className="border-b border-line bg-leaf-50/70 text-xs font-semibold text-muted">
                     <tr>
                       <th scope="col" className="w-10 px-4 py-3">
@@ -230,6 +230,7 @@ export default function MembersPage() {
                         />
                       </th>
                       <th scope="col" className="px-2 py-3">Member</th>
+                      <th scope="col" className="px-2 py-3">Role</th>
                       <th scope="col" className="px-2 py-3">Access</th>
                       <th scope="col" className="hidden px-2 py-3 md:table-cell">Membership</th>
                       <th scope="col" className="hidden px-2 py-3 lg:table-cell">Joined</th>
@@ -258,6 +259,9 @@ export default function MembersPage() {
                                 <p className="truncate text-xs text-muted">{member.email}</p>
                               </div>
                             </div>
+                          </td>
+                          <td className="px-2 py-3">
+                            <Badge tone={member.role === "admin" ? "blue" : "neutral"}>{member.role === "admin" ? "Admin" : "User"}</Badge>
                           </td>
                           <td className="px-2 py-3">
                             <Badge tone={member.status === "disabled" ? "amber" : "green"}>{member.status === "disabled" ? "Paused" : "Active"}</Badge>

@@ -9,10 +9,10 @@ export default function useClickOutside(ref, handler, active = true) {
   useEffect(() => {
     if (!active) return undefined;
     function onPointerDown(event) {
-      if (ref.current && !ref.current.contains(event.target)) handler();
+      if (ref.current && !ref.current.contains(event.target)) handler(event);
     }
     function onKeyDown(event) {
-      if (event.key === "Escape") handler();
+      if (event.key === "Escape") handler(event);
     }
     document.addEventListener("mousedown", onPointerDown);
     document.addEventListener("keydown", onKeyDown);

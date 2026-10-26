@@ -1,8 +1,8 @@
 // App.jsx
 // WHAT THIS FILE IS: the map of the website - which address shows which page.
 // WHAT IT DOES: lists every route. The routes are grouped by who can open them:
-//   Public pages     -> everyone (landing page, About, Help, Privacy, Contact)
 //   Share pages      -> anyone with a share link
+//   Public pages     -> everyone (landing page, About, Help, Privacy, Contact)
 //   Sign-in pages    -> only people who are signed out
 //   /app/...         -> signed-in Users only
 //   /admin/...       -> signed-in Admins only
@@ -39,6 +39,9 @@ import RequestsPage from "./pages/admin/RequestsPage";
 export default function App() {
   return (
     <Routes>
+      {/* ----- Share link page (open to anyone with the link) ----- */}
+      <Route path="share/:linkId" element={<SharePage />} />
+
       {/* ----- Public pages ----- */}
       <Route element={<PublicLayout />}>
         <Route index element={<LandingPage />} />
@@ -48,9 +51,6 @@ export default function App() {
         <Route path="contact" element={<ContactPage />} />
         <Route path="*" element={<NotFoundPage />} />
       </Route>
-
-      {/* ----- Share link page (open to anyone with the link) ----- */}
-      <Route path="share/:linkId" element={<SharePage />} />
 
       {/* ----- Sign in, sign up and password pages (signed-out visitors only) ----- */}
       <Route element={<GuestOnly />}>

@@ -18,6 +18,9 @@ export const settings = {
   // How long a login lasts. The backend sets the real value; this is only used for wording.
   sessionHours: 8,
 
+  // How long an idle session lasts before automatically signing out (in minutes).
+  inactivityMinutes: Number(import.meta.env.VITE_INACTIVITY_MINUTES ?? 15),
+
   // PLACEHOLDER: replace with the real support address before launch.
   contactEmail: "support@uploadhub.example",
 };
@@ -34,7 +37,7 @@ export const PERMISSIONS = [
 // The five membership states, with the wording and badge colour each one uses.
 export const MEMBERSHIP_STATES = {
   independent: { label: "Independent", tone: "neutral", help: "You are not part of a department." },
-  pending: { label: "Pending", tone: "amber", help: "Waiting for the department Admin to decide." },
+  pending: { label: "Pending", tone: "amber", help: "Waiting for the department Admin to approve." },
   active: { label: "Active", tone: "green", help: "You are a member of this department." },
   rejected: { label: "Rejected", tone: "red", help: "The Admin declined your request. You can request again." },
   removed: { label: "Removed", tone: "red", help: "Your department access ended. You can request again." },

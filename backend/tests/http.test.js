@@ -38,8 +38,9 @@ test("HTTP: sign up, sign in, read profile, unknown route, bad JSON", { skip: !e
     assert.equal(me.json.data.user.email, "ada@example.com");
     assert.equal((await call("GET", "/api/users/me")).status, 401);
     assert.equal((await call("POST", "/api/auth/login", { email: "ada@example.com", password: "bad" })).json.error.code, "INVALID_CREDENTIALS");
-    assert.equal((await call("POST", "/api/auth/register/admin", { name: "Bo Eze", email: "bo@example.com", password: "Password1", departmentName: "Physics", departmentCode: "PHY" })).status, 503);
-    assert.equal((await call("GET", "/api/files")).json.error.code, "ROUTE_NOT_FOUND");
+    assert.equal((await call("POST", "/api/auth/register/admin", { name: "Bo Eze", email: "bo@example.com", password: "Password1", departmentName: "Physics", departmentCode: "PHY" })).status, 201);
+    assert.equal((await call("GET", "/api/nonexistent-route")).json.error.code, "ROUTE_NOT_FOUND");
+    assert.equal((await call("GET", "/api/files", undefined, up.json.data.token)).status, 200);
     assert.equal((await call("POST", "/api/auth/login", "{bad json")).json.error.code, "BAD_JSON");
     assert.equal((await call("PATCH", "/api/users/me", { role: "admin" }, up.json.data.token)).json.error.code, "FIELD_NOT_ALLOWED");
   } finally {

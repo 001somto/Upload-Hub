@@ -10,6 +10,32 @@
 
 const SESSION_KEY = "uploadhub.session";
 const RETURN_KEY = "uploadhub.returnTo";
+const LAST_ACTIVITY_KEY = "uploadhub.lastActivity";
+
+export function recordActivity() {
+  try {
+    localStorage.setItem(LAST_ACTIVITY_KEY, String(Date.now()));
+  } catch {
+    // Storage can be blocked.
+  }
+}
+
+export function getLastActivity() {
+  try {
+    const val = localStorage.getItem(LAST_ACTIVITY_KEY);
+    return val ? Number(val) : null;
+  } catch {
+    return null;
+  }
+}
+
+export function clearActivity() {
+  try {
+    localStorage.removeItem(LAST_ACTIVITY_KEY);
+  } catch {
+    // Nothing to do.
+  }
+}
 
 // Reads the expiry time out of the token. This is only for knowing when to stop using it;
 // the backend always does the real checking.
@@ -26,6 +52,7 @@ function readTokenExpiry(token) {
 export function saveSession(token) {
   try {
     localStorage.setItem(SESSION_KEY, JSON.stringify({ token, expiresAt: readTokenExpiry(token) }));
+    recordActivity();
   } catch {
     // Storage can be blocked (private mode). The user stays signed in until the page closes.
   }
@@ -56,6 +83,7 @@ export function getToken() {
 export function clearSession() {
   try {
     localStorage.removeItem(SESSION_KEY);
+    clearActivity();
   } catch {
     // Nothing to do.
   }

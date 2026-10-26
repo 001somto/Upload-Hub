@@ -30,6 +30,7 @@ import MoveDialog from "./MoveDialog";
 import NameDialog from "./NameDialog";
 import PreviewDialog from "./PreviewDialog";
 import ShareDialog from "./ShareDialog";
+import FileInfoDialog from "./FileInfoDialog";
 import UploadDialog from "./UploadDialog";
 
 const SORTS = [
@@ -129,8 +130,13 @@ export default function FileBrowser({ scope = "independent" }) {
   }
 
   function openFile(file) {
-    if (PREVIEWABLE_TYPES.includes(file.contentType) && can("download")) setDialog({ type: "preview", file });
-    else downloadFile(file);
+    // For previewable types open the preview dialog; for all others open
+    // the File Actions dialog so the user can Share, Download, Rename, etc.
+    if (PREVIEWABLE_TYPES.includes(file.contentType) && can("download")) {
+      setDialog({ type: "preview", file });
+    } else {
+      setDialog({ type: "info", file });
+    }
   }
 
   async function downloadSelected() {
@@ -343,7 +349,12 @@ export default function FileBrowser({ scope = "independent" }) {
                       aria-label={`Select ${file.name}`}
                       className="h-4 w-4 cursor-pointer rounded accent-leaf-600"
                     />
-                    <button type="button" onClick={() => openFile(file)} className="flex min-w-0 flex-1 items-center gap-3 text-left">
+                    <button
+                      type="button"
+                      onClick={() => openFile(file)}
+                      title={PREVIEWABLE_TYPES.includes(file.contentType) ? "Click to preview" : "Use the Share or ⋯ menu to act on this file"}
+                      className={`flex min-w-0 flex-1 items-center gap-3 text-left ${PREVIEWABLE_TYPES.includes(file.contentType) ? "cursor-pointer" : "cursor-default"}`}
+                    >
                       <FileIcon contentType={file.contentType} />
                       <span className="min-w-0">
                         <span className="block truncate text-sm font-semibold text-ink">{file.name}</span>
@@ -352,6 +363,17 @@ export default function FileBrowser({ scope = "independent" }) {
                     </button>
                     <span className="hidden w-24 text-right text-sm text-muted sm:block">{formatBytes(file.size)}</span>
                     <span className="hidden w-28 text-right text-sm text-muted md:block">{formatDate(file.uploadedAt)}</span>
+                    {can("share") ? (
+                      <button
+                        type="button"
+                        title="Share"
+                        aria-label={`Share ${file.name}`}
+                        onClick={() => setDialog({ type: "share", target: { type: "file", id: file.fileId, name: file.name } })}
+                        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-muted hover:bg-leaf-100 hover:text-leaf-700 transition"
+                      >
+                        <Share2 className="h-4 w-4" aria-hidden="true" />
+                      </button>
+                    ) : null}
                     <ActionMenu label={`Actions for ${file.name}`} items={rowActions(file, "file")} />
                   </li>
                 ))}
@@ -412,6 +434,20 @@ export default function FileBrowser({ scope = "independent" }) {
       <ShareDialog open={Boolean(dialog && dialog.type === "share")} onClose={() => setDialog(null)} target={dialog && dialog.target} />
 
       {dialog && dialog.type === "preview" ? <PreviewDialog file={dialog.file} onClose={() => setDialog(null)} onDownload={downloadFile} /> : null}
+
+      {dialog && dialog.type === "info" ? (
+        <FileInfoDialog
+          file={dialog.file}
+          can={can}
+          onClose={() => setDialog(null)}
+          onDownload={(file) => downloadFile(file)}
+          onShare={(file) => setDialog({ type: "share", target: { type: "file", id: file.fileId, name: file.name } })}
+          onPreview={(file) => setDialog({ type: "preview", file })}
+          onRename={(file) => setDialog({ type: "rename", kind: "file", item: file })}
+          onMove={(file) => setDialog({ type: "move", items: { fileIds: [file.fileId], folderIds: [] } })}
+          onDelete={(file) => setDialog({ type: "delete", items: { fileIds: [file.fileId], folderIds: [] }, name: file.name })}
+        />
+      ) : null}
     </div>
   );
 }

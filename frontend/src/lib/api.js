@@ -106,6 +106,7 @@ async function request(method, path, { body, query, auth = true, signal } = {}) 
       signal,
     });
   } catch (error) {
+    console.error("[api request error]", method, path, error);
     if (error && error.name === "AbortError") throw error;
     throw new ApiError({
       code: "NETWORK_ERROR",

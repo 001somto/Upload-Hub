@@ -35,7 +35,7 @@ export default function SharesPage() {
   const result = useApiData(() => api.shares.list(), []);
   const [revoking, setRevoking] = useState(null);
   const [busy, setBusy] = useState(false);
-  const filesPath = user.role === "admin" ? "/admin/workspace" : "/app/files";
+  const filesPath = user?.role === "admin" ? "/admin/workspace" : "/app/files";
 
   async function copy(link) {
     const url = link.url || `${window.location.origin}/share/${link.linkId}`;

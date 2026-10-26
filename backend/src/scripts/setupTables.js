@@ -1,8 +1,6 @@
 // scripts/setupTables.js
-// WHAT THIS FILE IS: a one-time helper that creates the DynamoDB tables this part needs.
-// WHAT IT DOES: run "npm run setup-tables" once (DynamoDB Local must be running). It creates
-// the Users table and the PasswordResets table (with automatic cleanup of expired tokens).
-// It is safe to run again: tables that already exist are left alone.
+// Creates the DynamoDB tables needed by UploadHub.
+// Safe to re-run: tables that already exist are left alone.
 
 import { CreateTableCommand, DescribeTableCommand, UpdateTimeToLiveCommand } from "@aws-sdk/client-dynamodb";
 import { loadConfig } from "../config/env.js";
@@ -22,7 +20,10 @@ async function exists(name) {
 }
 
 async function ensure(name, keyName) {
-  if (await exists(name)) return console.log(`Table ${name} already exists.`);
+  if (await exists(name)) {
+    console.log(`Table ${name} already exists.`);
+    return;
+  }
   await raw.send(
     new CreateTableCommand({
       TableName: name,
@@ -35,17 +36,29 @@ async function ensure(name, keyName) {
 }
 
 try {
+  console.log(`Connecting to AWS DynamoDB in region ${config.aws.region}...`);
   await ensure(config.aws.usersTable, "pk");
   await ensure(config.aws.resetTokensTable, "tokenHash");
+  await ensure(config.aws.filesTable, "fileId");
+  await ensure(config.aws.foldersTable, "folderId");
+  await ensure(config.aws.departmentsTable, "departmentId");
+  await ensure(config.aws.sharesTable, "linkId");
+  await ensure(config.aws.notificationsTable, "notificationId");
+  await ensure(config.aws.auditTable, "logId");
+
   try {
     await raw.send(
-      new UpdateTimeToLiveCommand({ TableName: config.aws.resetTokensTable, TimeToLiveSpecification: { Enabled: true, AttributeName: "expiresAtEpoch" } })
+      new UpdateTimeToLiveCommand({
+        TableName: config.aws.resetTokensTable,
+        TimeToLiveSpecification: { Enabled: true, AttributeName: "expiresAtEpoch" },
+      })
     );
   } catch (error) {
-    console.log(`Note: could not switch on automatic cleanup (${error.name}). Expired tokens are still refused by the code.`);
+    console.log(`Note: could not switch on automatic cleanup (${error.name}).`);
   }
-  console.log("Done.");
+
+  console.log("All DynamoDB tables verified and ready!");
 } catch (error) {
-  console.error("Could not set up the tables. Is DynamoDB Local running at", config.aws.endpoint || "(AWS)", "?\n", error.message);
+  console.error("Could not set up the tables on AWS:", error.message);
   process.exit(1);
 }

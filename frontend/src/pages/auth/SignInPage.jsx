@@ -85,8 +85,10 @@ export default function SignInPage({ role }) {
       </p>
 
       {expiredNotice ? (
-        <InlineAlert tone="warning" className="mt-6" title="Your session ended">
-          For your safety you are signed out after {settings.sessionHours} hours. Sign in again to continue where you left off.
+        <InlineAlert tone="warning" className="mt-6" title={expiredNotice === "inactivity" ? "Signed out due to inactivity" : "Your session ended"}>
+          {expiredNotice === "inactivity"
+            ? `You were signed out because there was no activity for ${settings.inactivityMinutes} minutes. Sign in again to continue.`
+            : `For your safety you are signed out after ${settings.sessionHours} hours. Sign in again to continue where you left off.`}
         </InlineAlert>
       ) : null}
 

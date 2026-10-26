@@ -3,9 +3,10 @@
 // WHAT IT DOES: a read-only, newest-first list of what happened in the Admin's own
 // department - who did what and when. Filter by person, action and dates; 20 per page.
 // There is no edit, delete or export: the record is kept by the server and cannot be
-// changed from here. STATUS: PROVISIONAL endpoints (api.audit.list, api.department.members).
+// changed from here.
 
 import { useEffect, useState } from "react";
+import Badge from "../../components/ui/Badge";
 import Card from "../../components/ui/Card";
 import DataBoundary from "../../components/ui/DataBoundary";
 import { SelectField, TextField } from "../../components/ui/Fields";
@@ -20,6 +21,11 @@ import { formatDateTime } from "../../lib/format";
 import { ClipboardList } from "../../lib/icons";
 
 const PAGE_SIZE = 20;
+
+function RoleBadge({ role }) {
+  if (role === "admin") return <Badge tone="blue">Admin</Badge>;
+  return <Badge tone="neutral">User</Badge>;
+}
 
 export default function AuditPage() {
   useDocumentTitle("Audit trail");
@@ -85,11 +91,12 @@ export default function AuditPage() {
         {(data) => (
           <Card padded={false}>
             <div className="overflow-x-auto">
-              <table className="w-full min-w-[32rem] text-left text-sm">
+              <table className="w-full min-w-[38rem] text-left text-sm">
                 <thead className="border-b border-line bg-leaf-50/70 text-xs font-semibold text-muted">
                   <tr>
                     <th scope="col" className="px-5 py-3">When</th>
                     <th scope="col" className="px-3 py-3">Who</th>
+                    <th scope="col" className="px-3 py-3">Role</th>
                     <th scope="col" className="px-3 py-3">What happened</th>
                     <th scope="col" className="px-5 py-3">On</th>
                   </tr>
@@ -101,6 +108,9 @@ export default function AuditPage() {
                         <time dateTime={item.timestamp}>{formatDateTime(item.timestamp)}</time>
                       </td>
                       <td className="px-3 py-3 font-semibold text-ink">{item.userName}</td>
+                      <td className="px-3 py-3">
+                        <RoleBadge role={item.userRole} />
+                      </td>
                       <td className="px-3 py-3 text-ink">{describeAction(item.action)}</td>
                       <td className="px-5 py-3 text-muted">{item.target || "-"}</td>
                     </tr>

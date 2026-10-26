@@ -2,7 +2,8 @@
 // WHAT THIS FILE IS: the website's memory of "who is signed in".
 // WHAT IT DOES: keeps the signed-in user and login status where every page can read it
 // with `useAuth()`. It signs people in and out, restores a saved login when the page
-// reloads, and signs people out cleanly when their login expires (after 8 hours).
+// reloads, and signs people out cleanly when their login expires (after 8 hours) or
+// when idle for longer than `settings.inactivityMinutes`.
 //
 // `status` is one of:
 //   "loading"     -> checking a saved login with the backend
@@ -12,7 +13,8 @@
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { ApiError, api, isNetworkError, setUnauthorizedHandler } from "../lib/api";
-import { clearSession, loadSession, saveSession, setReturnTo } from "../lib/session";
+import { clearSession, getLastActivity, loadSession, recordActivity, saveSession, setReturnTo } from "../lib/session";
+import { settings } from "../config/settings";
 
 const AuthContext = createContext(null);
 
@@ -24,15 +26,16 @@ export function homePathFor(role) {
 export function AuthProvider({ children }) {
   const [status, setStatus] = useState("loading");
   const [user, setUser] = useState(null);
-  // True when a login ran out, so the sign-in page can explain why the person is back.
+  // Holds false, "session" (e.g. 8h expiry or 401), or "inactivity"
   const [expiredNotice, setExpiredNotice] = useState(false);
 
-  // Ends the session in the browser. `expired` is true when it ended on its own.
-  const endSession = useCallback((expired) => {
+  // Ends the session in the browser. `reason` can be false, true ("session"), or "inactivity".
+  const endSession = useCallback((reason) => {
     clearSession();
     setUser(null);
     setStatus("signedOut");
-    if (expired) setExpiredNotice(true);
+    if (reason === true) setExpiredNotice("session");
+    else if (reason) setExpiredNotice(reason);
   }, []);
 
   // When any signed-in request is refused with 401, remember the current page and sign out.
@@ -53,15 +56,28 @@ export function AuthProvider({ children }) {
     }
     if (saved.expired || !saved.token) {
       setReturnTo(window.location.pathname + window.location.search);
-      setExpiredNotice(true);
+      setExpiredNotice("session");
       setStatus("signedOut");
       return;
     }
+
+    // Check inactivity across reloads / restarts
+    const lastActivity = getLastActivity();
+    const inactivityLimit = (settings.inactivityMinutes || 15) * 60 * 1000;
+    if (lastActivity && Date.now() - lastActivity > inactivityLimit) {
+      clearSession();
+      setReturnTo(window.location.pathname + window.location.search);
+      setExpiredNotice("inactivity");
+      setStatus("signedOut");
+      return;
+    }
+
     setStatus("loading");
     try {
       const data = await api.users.me();
       setUser(data.user);
       setStatus("signedIn");
+      recordActivity();
     } catch (error) {
       if (isNetworkError(error)) setStatus("unreachable");
       // A 401 is handled by the handler above, which already signed the person out.
@@ -72,6 +88,53 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     restoreSession();
   }, [restoreSession]);
+
+  // Tracks user interaction and logs out when idle for inactivityMinutes
+  useEffect(() => {
+    if (status !== "signedIn" || !user) return;
+
+    let lastRecorded = Date.now();
+    recordActivity();
+
+    function onActivity() {
+      const now = Date.now();
+      // Throttle recording to localStorage to once every 3 seconds
+      if (now - lastRecorded > 3000) {
+        lastRecorded = now;
+        recordActivity();
+      }
+    }
+
+    const events = ["mousedown", "keydown", "scroll", "touchstart", "mousemove"];
+    events.forEach((name) => window.addEventListener(name, onActivity, { passive: true }));
+
+    const inactivityLimit = (settings.inactivityMinutes || 15) * 60 * 1000;
+
+    function checkInactivity() {
+      const last = getLastActivity() || lastRecorded;
+      if (Date.now() - last >= inactivityLimit) {
+        setReturnTo(window.location.pathname + window.location.search);
+        endSession("inactivity");
+      }
+    }
+
+    // Check every 5 seconds
+    const timer = setInterval(checkInactivity, 5000);
+
+    function onVisibilityChange() {
+      if (document.visibilityState === "visible") {
+        checkInactivity();
+      }
+    }
+
+    document.addEventListener("visibilitychange", onVisibilityChange);
+
+    return () => {
+      events.forEach((name) => window.removeEventListener(name, onActivity));
+      clearInterval(timer);
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+    };
+  }, [status, user, endSession]);
 
   // Signs in. `expectedRole` is the sign-in page the person used ("admin" or "user").
   const signIn = useCallback(async ({ email, password, expectedRole }) => {
