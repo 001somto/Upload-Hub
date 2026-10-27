@@ -76,7 +76,12 @@ export function setUnauthorizedHandler(handler) {
 // ---------------------------------------------------------------------------
 
 function buildUrl(path, query) {
-  const base = `${settings.apiBaseUrl}${path}`;
+  const cleanBase = settings.apiBaseUrl.replace(/\/+$/, "");
+  const normalizedBase = path.startsWith("/api") && cleanBase.endsWith("/api")
+    ? cleanBase.slice(0, -4)
+    : cleanBase;
+  const normalizedPath = path.startsWith("/") ? path : `/${path}`;
+  const base = `${normalizedBase}${normalizedPath}`;
   if (!query) return base;
   const params = new URLSearchParams();
   for (const [key, value] of Object.entries(query)) {
