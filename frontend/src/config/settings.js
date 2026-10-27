@@ -10,7 +10,7 @@ export const settings = {
   institution: "University of Nigeria, Nsukka",
 
   // Where the backend API lives. Set VITE_API_BASE_URL in frontend/.env to change it.
-  apiBaseUrl: (import.meta.env.VITE_API_BASE_URL ?? "http://localhost:4000").replace(/\/+$/, ""),
+  apiBaseUrl: (import.meta.env.VITE_API_BASE_URL ?? (import.meta.env.PROD ? "https://api.uploadhub.work.gd/api" : "http://localhost:4000")).replace(/\/+$/, ""),
 
   // All dates and times are shown in Nigeria time, 24-hour, e.g. "24 Oct 2026, 10:42".
   timeZone: "Africa/Lagos",
