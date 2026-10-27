@@ -37,7 +37,13 @@ export function loadConfig(env = process.env) {
     jwtSecret,
     sessionHours,
     corsOrigins: (env.CORS_ORIGINS || "http://localhost:5173,https://www.uploadhub.work.gd,https://uploadhub.work.gd,http://localhost:4000,http://127.0.0.1:5173").split(",").map((item) => item.trim()).filter(Boolean),
-    frontendUrl: (env.FRONTEND_URL || (production ? "https://www.uploadhub.work.gd" : "http://localhost:5173")).replace(/\/+$/, ""),
+    frontendUrl: (() => {
+      let raw = env.FRONTEND_URL || (production ? "https://www.uploadhub.work.gd" : "http://localhost:5173");
+      if (!/^https?:\/\//i.test(raw)) {
+        raw = `https://${raw.replace(/^https?:?\/*/, "")}`;
+      }
+      return raw.replace(/\/+$/, "");
+    })(),
     trustProxy: env.TRUST_PROXY === "true",
     storageMode,
     emailMode,
