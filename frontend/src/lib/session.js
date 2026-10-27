@@ -49,16 +49,35 @@ function readTokenExpiry(token) {
   }
 }
 
-export function saveSession(token) {
+export function saveSession(token, user = null) {
   try {
-    localStorage.setItem(SESSION_KEY, JSON.stringify({ token, expiresAt: readTokenExpiry(token) }));
+    const current = loadSession();
+    const existingUser = current ? current.user : null;
+    localStorage.setItem(
+      SESSION_KEY,
+      JSON.stringify({
+        token,
+        user: user || existingUser || null,
+        expiresAt: readTokenExpiry(token),
+      })
+    );
     recordActivity();
   } catch {
     // Storage can be blocked (private mode). The user stays signed in until the page closes.
   }
 }
 
-// Returns the saved token, or null when there is none or it has already expired.
+export function saveUser(user) {
+  try {
+    const raw = localStorage.getItem(SESSION_KEY);
+    if (!raw) return;
+    const saved = JSON.parse(raw);
+    saved.user = user;
+    localStorage.setItem(SESSION_KEY, JSON.stringify(saved));
+  } catch {}
+}
+
+// Returns the saved session, or null when there is none or it has already expired.
 export function loadSession() {
   try {
     const raw = localStorage.getItem(SESSION_KEY);
@@ -67,9 +86,9 @@ export function loadSession() {
     if (!saved.token) return null;
     if (saved.expiresAt && saved.expiresAt <= Date.now()) {
       clearSession();
-      return { expired: true, token: null };
+      return { expired: true, token: null, user: null };
     }
-    return { expired: false, token: saved.token };
+    return { expired: false, token: saved.token, user: saved.user || null };
   } catch {
     return null;
   }

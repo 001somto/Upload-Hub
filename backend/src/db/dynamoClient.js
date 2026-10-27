@@ -12,6 +12,11 @@ export function createDynamoClients(aws) {
     options.endpoint = aws.endpoint;
     // DynamoDB Local accepts any keys, but the SDK insists on having some.
     options.credentials = { accessKeyId: "local", secretAccessKey: "local" };
+  } else if (process.env.AWS_ACCESS_KEY_ID && process.env.AWS_SECRET_ACCESS_KEY) {
+    options.credentials = {
+      accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+      secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+    };
   }
   const raw = new DynamoDBClient(options);
   const doc = DynamoDBDocumentClient.from(raw, { marshallOptions: { removeUndefinedValues: true } });

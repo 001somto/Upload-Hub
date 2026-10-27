@@ -31,7 +31,11 @@ export default function ForgotPasswordPage() {
     setBusy(true);
     try {
       const data = await api.auth.forgotPassword({ email: email.trim() });
-      setResult({ tone: "info", message: (data && data.message) || "Your request was received." });
+      setResult({
+        tone: "info",
+        message: (data && data.message) || "Your request was received.",
+        resetLink: data && data.resetLink,
+      });
     } catch (caught) {
       setResult({ tone: "error", message: caught instanceof ApiError ? caught.message : "Something went wrong. Please try again." });
     } finally {
@@ -47,7 +51,17 @@ export default function ForgotPasswordPage() {
       <form onSubmit={handleSubmit} noValidate className="mt-6 space-y-4">
         {result ? (
           <InlineAlert tone={result.tone} title={result.tone === "error" ? "Could not send the request" : "Request received"}>
-            {result.message}
+            <p>{result.message}</p>
+            {result.resetLink ? (
+              <p className="mt-3">
+                <a
+                  href={result.resetLink}
+                  className="inline-block font-semibold text-leaf-800 underline hover:text-leaf-900"
+                >
+                  Click here to proceed to reset password &rarr;
+                </a>
+              </p>
+            ) : null}
           </InlineAlert>
         ) : null}
         <TextField

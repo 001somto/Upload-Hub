@@ -6,12 +6,19 @@ import { S3Client } from "@aws-sdk/client-s3";
 export function createS3Client(s3Config = {}) {
   const options = {
     region: s3Config.region || "eu-west-1",
+    requestChecksumCalculation: "WHEN_REQUIRED",
+    responseChecksumValidation: "WHEN_REQUIRED",
   };
 
   if (s3Config.endpoint) {
     options.endpoint = s3Config.endpoint;
     options.forcePathStyle = s3Config.forcePathStyle ?? true;
     options.credentials = { accessKeyId: "local", secretAccessKey: "local" };
+  } else if (process.env.AWS_ACCESS_KEY_ID && process.env.AWS_SECRET_ACCESS_KEY) {
+    options.credentials = {
+      accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+      secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+    };
   }
 
   return new S3Client(options);

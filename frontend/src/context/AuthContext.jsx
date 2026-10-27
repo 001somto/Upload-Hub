@@ -13,7 +13,7 @@
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { ApiError, api, isNetworkError, setUnauthorizedHandler } from "../lib/api";
-import { clearSession, getLastActivity, loadSession, recordActivity, saveSession, setReturnTo } from "../lib/session";
+import { clearSession, getLastActivity, loadSession, recordActivity, saveSession, saveUser, setReturnTo } from "../lib/session";
 import { settings } from "../config/settings";
 
 const AuthContext = createContext(null);
@@ -24,8 +24,12 @@ export function homePathFor(role) {
 }
 
 export function AuthProvider({ children }) {
-  const [status, setStatus] = useState("loading");
-  const [user, setUser] = useState(null);
+  // Pre-populate with saved user if valid, avoiding full-page loading flash on refresh
+  const initialSession = loadSession();
+  const hasValidCachedSession = initialSession && !initialSession.expired && Boolean(initialSession.token && initialSession.user);
+
+  const [status, setStatus] = useState(hasValidCachedSession ? "signedIn" : (initialSession?.token ? "loading" : "signedOut"));
+  const [user, setUser] = useState(hasValidCachedSession ? initialSession.user : null);
   // Holds false, "session" (e.g. 8h expiry or 401), or "inactivity"
   const [expiredNotice, setExpiredNotice] = useState(false);
 
@@ -72,16 +76,27 @@ export function AuthProvider({ children }) {
       return;
     }
 
-    setStatus("loading");
+    if (saved.user) {
+      setUser(saved.user);
+      setStatus("signedIn");
+    } else {
+      setStatus("loading");
+    }
+
     try {
       const data = await api.users.me();
       setUser(data.user);
+      saveUser(data.user);
       setStatus("signedIn");
       recordActivity();
     } catch (error) {
-      if (isNetworkError(error)) setStatus("unreachable");
+      if (isNetworkError(error)) {
+        if (!saved.user) setStatus("unreachable");
+      }
       // A 401 is handled by the handler above, which already signed the person out.
-      else if (!(error instanceof ApiError) || error.status !== 401) endSession(false);
+      else if (!(error instanceof ApiError) || error.status !== 401) {
+        if (!saved.user) endSession(false);
+      }
     }
   }, [endSession]);
 
@@ -149,7 +164,7 @@ export function AuthProvider({ children }) {
         } sign-in page instead.`,
       });
     }
-    saveSession(data.token);
+    saveSession(data.token, data.user);
     setUser(data.user);
     setStatus("signedIn");
     setExpiredNotice(false);
@@ -160,7 +175,7 @@ export function AuthProvider({ children }) {
   const signUp = useCallback(async (role, form) => {
     const call = role === "admin" ? api.auth.registerAdmin : api.auth.registerUser;
     const data = await call(form);
-    saveSession(data.token);
+    saveSession(data.token, data.user);
     setUser(data.user);
     setStatus("signedIn");
     setExpiredNotice(false);
@@ -173,6 +188,7 @@ export function AuthProvider({ children }) {
   const refreshUser = useCallback(async () => {
     const data = await api.users.me();
     setUser(data.user);
+    saveUser(data.user);
     return data.user;
   }, []);
 

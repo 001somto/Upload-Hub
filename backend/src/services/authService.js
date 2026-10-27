@@ -25,7 +25,7 @@ const RESET_MINUTES = 30;
 const BAD_LOGIN = "Incorrect email or password.";
 const sha256 = (text) => crypto.createHash("sha256").update(text).digest("hex");
 
-export function createAuthService({ users, resets, departments, email, tokens, storage, config }) {
+export function createAuthService({ users, resets, departments, email, tokens, storage, config, snsService }) {
   // A pretend hash, so a login for an unknown email takes as long as a real one.
   // That stops attackers learning which emails have accounts by timing.
   const dummyHash = bcrypt.hashSync("not-a-real-password-1", BCRYPT_ROUNDS);
@@ -119,6 +119,7 @@ export function createAuthService({ users, resets, departments, email, tokens, s
     async forgotPassword({ email: rawEmail }) {
       if (checkEmail(rawEmail)) throw badRequest("Enter a valid email address.", { email: checkEmail(rawEmail) });
       const user = await users.findByEmail(normaliseEmail(rawEmail));
+      let resetLink = null;
       if (user) {
         const token = crypto.randomBytes(32).toString("hex");
         await resets.save({
@@ -126,12 +127,38 @@ export function createAuthService({ users, resets, departments, email, tokens, s
           userId: user.userId,
           expiresAt: new Date(Date.now() + RESET_MINUTES * 60 * 1000).toISOString(),
         });
-        await email.sendPasswordReset({ to: user.email, name: user.name, link: `${config.frontendUrl}/reset-password?token=${token}` });
+        const link = `${config.frontendUrl}/reset-password?token=${token}`;
+        resetLink = link;
+
+        // 1. Deliver via email gateway
+        try {
+          await email.sendPasswordReset({ to: user.email, name: user.name, link });
+        } catch (err) {
+          console.warn("[Email send notice]:", err.message);
+        }
+
+        // 2. Deliver via Amazon SNS if available
+        if (snsService && typeof snsService.isEnabled === "function" && snsService.isEnabled()) {
+          try {
+            await snsService.publishNotification({
+              userId: user.userId,
+              type: "password_reset",
+              subject: "UploadHub: Password Reset Request",
+              message: `Hello ${user.name},\n\nYou requested to reset your UploadHub account password.\nUse the link below to choose a new password (valid for ${RESET_MINUTES} minutes):\n\n${link}\n\nIf you did not request this, you can safely ignore this email.`,
+            });
+          } catch (err) {
+            console.warn("[SNS password reset notice]:", err.message);
+          }
+        }
       }
       // The same answer whether or not the email exists.
       const base = "If an account exists for that email, a reset link will be sent.";
+      const hasDelivery = email.configured || email.developmentOnly || (snsService && typeof snsService.isEnabled === "function" && snsService.isEnabled());
       return {
-        message: email.configured || email.developmentOnly ? base : `${base} Email sending is not set up on this server yet, so nothing can be delivered right now.`,
+        message: hasDelivery
+          ? base
+          : `${base} Email sending is not set up on this server yet, so nothing can be delivered right now.`,
+        resetLink: !email.configured ? resetLink : undefined,
       };
     },
 
