@@ -5,7 +5,7 @@ import { S3Client } from "@aws-sdk/client-s3";
 
 export function createS3Client(s3Config = {}) {
   const options = {
-    region: s3Config.region || "us-east-1",
+    region: s3Config.region || "eu-west-1",
   };
 
   if (s3Config.endpoint) {

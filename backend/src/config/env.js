@@ -42,7 +42,7 @@ export function loadConfig(env = process.env) {
     storageMode,
     emailMode,
     aws: {
-      region: env.AWS_REGION || "us-east-1",
+      region: env.AWS_REGION || "eu-west-1",
       endpoint: env.DYNAMODB_ENDPOINT || "",
       usersTable: env.USERS_TABLE || "UploadHub_Users",
       resetTokensTable: env.RESET_TOKENS_TABLE || "UploadHub_PasswordResets",
@@ -56,7 +56,7 @@ export function loadConfig(env = process.env) {
     },
     s3: {
       bucket: env.S3_BUCKET || "uploadhub-storage",
-      region: env.AWS_REGION || "us-east-1",
+      region: env.AWS_REGION || "eu-west-1",
       endpoint: env.S3_ENDPOINT || "",
       forcePathStyle: env.S3_FORCE_PATH_STYLE === "true",
     },
