@@ -44,6 +44,13 @@ export function loadConfig(env = process.env) {
       }
       return raw.replace(/\/+$/, "");
     })(),
+    apiBaseUrl: (() => {
+      let raw = env.API_BASE_URL || (production ? "https://api.uploadhub.work.gd" : `http://localhost:${Number(env.PORT || 4000)}`);
+      if (!/^https?:\/\//i.test(raw)) {
+        raw = `https://${raw.replace(/^https?:?\/*/, "")}`;
+      }
+      return raw.replace(/\/+$/, "");
+    })(),
     trustProxy: env.TRUST_PROXY === "true",
     storageMode,
     emailMode,

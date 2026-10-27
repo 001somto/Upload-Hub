@@ -61,7 +61,34 @@ export function createS3StorageGateway({ config, localFallbackDir = null }) {
     // Profile photo viewing link (synchronous helper used by publicUser)
     photoUrl(key) {
       if (!key) return null;
-      return `${config.frontendUrl.replace(/:\d+$/, "")}:${config.port}/api/storage/photo?key=${encodeURIComponent(key)}`;
+      const apiBase = config.apiBaseUrl || (config.production ? "https://api.uploadhub.work.gd" : `http://localhost:${config.port}`);
+      return `${apiBase.replace(/\/+$/, "")}/api/storage/photo?key=${encodeURIComponent(key)}`;
+    },
+
+    // Direct stream for profile photos
+    async getObjectStream(s3Key) {
+      if (isLocalFallback || !s3Client) {
+        const targetPath = path.join(uploadDir, s3Key);
+        if (!fs.existsSync(targetPath)) return null;
+        return {
+          stream: fs.createReadStream(targetPath),
+          contentType: "image/jpeg",
+        };
+      }
+      try {
+        const command = new GetObjectCommand({
+          Bucket: s3.bucket,
+          Key: s3Key,
+        });
+        const response = await s3Client.send(command);
+        return {
+          stream: response.Body,
+          contentType: response.ContentType,
+          contentLength: response.ContentLength,
+        };
+      } catch {
+        return null;
+      }
     },
 
     // Presigned upload URL for a profile photo

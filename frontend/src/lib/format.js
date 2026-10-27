@@ -26,6 +26,15 @@ export function percentUsed(used, limit) {
   return Math.min(100, Math.max(0, Math.round((used / limit) * 100)));
 }
 
+// Formats percent used with precision for small percentages (e.g. 3 MB of 5 GB -> "< 0.1%" or "0.1%")
+export function formatPercentUsed(used, limit) {
+  if (!limit || limit <= 0 || !used || used <= 0) return "0%";
+  const ratio = (used / limit) * 100;
+  if (ratio < 0.1) return "< 0.1%";
+  if (ratio < 1) return `${ratio.toFixed(1)}%`;
+  return `${Math.round(ratio)}%`;
+}
+
 // Picks out one part (day, month...) of a date, in Nigeria time.
 function dateParts(value, options) {
   const date = value instanceof Date ? value : new Date(value);

@@ -4,7 +4,7 @@
 // breakdown by type and the latest uploads. Every number comes from the backend
 // (api.storage.me). The limit (1 GB for Users, 5 GB for Admins) is decided by the server.
 
-import { fileKind, formatBytes, formatDate, percentUsed } from "../../lib/format";
+import { fileKind, formatBytes, formatDate, formatPercentUsed, percentUsed } from "../../lib/format";
 import Card, { CardHeader } from "../ui/Card";
 import { EmptyState } from "../ui/Feedback";
 import StatCard from "../ui/StatCard";
@@ -13,6 +13,8 @@ import FileIcon from "./FileIcon";
 
 export function UsageBar({ used, limit }) {
   const percent = percentUsed(used, limit);
+  const percentText = formatPercentUsed(used, limit);
+  const visualWidth = used > 0 && percent < 1 ? Math.max(1, (used / limit) * 100) : percent;
   const tone = percent >= 95 ? "bg-red-500" : percent >= 80 ? "bg-sun" : "bg-leaf-500";
   return (
     <div>
@@ -22,13 +24,13 @@ export function UsageBar({ used, limit }) {
         aria-valuemin={0}
         aria-valuemax={100}
         aria-valuenow={percent}
-        aria-label={`Storage used: ${percent} percent`}
+        aria-label={`Storage used: ${percentText}`}
       >
-        <div className={`h-full rounded-full transition-all duration-700 ${tone}`} style={{ width: `${percent}%` }} />
+        <div className={`h-full rounded-full transition-all duration-700 ${tone}`} style={{ width: `${visualWidth}%` }} />
       </div>
       <p className="mt-2 text-sm text-muted">
         {percent >= 95 ? "Almost full. " : percent >= 80 ? "Getting full. " : ""}
-        {percent}% used
+        {percentText} used
       </p>
     </div>
   );
