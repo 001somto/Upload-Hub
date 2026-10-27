@@ -72,7 +72,7 @@ export function createSnsService({ config = {} }) {
           `Date: ${new Date().toLocaleString("en-GB", { timeZone: "Africa/Lagos" })} (WAT)`,
           ``,
           `Open your UploadHub workspace:`,
-          config.frontendUrl || process.env.FRONTEND_URL || "http://localhost:5173",
+          config.frontendUrl || process.env.FRONTEND_URL || "https://www.uploadhub.work.gd",
           ``,
           `================================`,
           `You received this email because activity notifications are enabled for your UploadHub account.`,

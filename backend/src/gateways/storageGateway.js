@@ -54,6 +54,8 @@ export function createS3StorageGateway({ config, localFallbackDir = null }) {
     } catch {}
   }
 
+  const apiBase = (config.apiBaseUrl || (config.production ? "https://api.uploadhub.work.gd" : `http://localhost:${config.port}`)).replace(/\/+$/, "");
+
   return {
     isLocalFallback,
     uploadDir,
@@ -61,8 +63,7 @@ export function createS3StorageGateway({ config, localFallbackDir = null }) {
     // Profile photo viewing link (synchronous helper used by publicUser)
     photoUrl(key) {
       if (!key) return null;
-      const apiBase = config.apiBaseUrl || (config.production ? "https://api.uploadhub.work.gd" : `http://localhost:${config.port}`);
-      return `${apiBase.replace(/\/+$/, "")}/api/storage/photo?key=${encodeURIComponent(key)}`;
+      return `${apiBase}/api/storage/photo?key=${encodeURIComponent(key)}`;
     },
 
     // Direct stream for profile photos
@@ -98,7 +99,7 @@ export function createS3StorageGateway({ config, localFallbackDir = null }) {
 
       if (isLocalFallback || !s3Client) {
         return {
-          uploadUrl: `http://localhost:${config.port}/api/storage/local-upload?key=${encodeURIComponent(photoKey)}`,
+          uploadUrl: `${apiBase}/api/storage/local-upload?key=${encodeURIComponent(photoKey)}`,
           photoKey,
           headers: { "Content-Type": contentType },
         };
@@ -125,7 +126,7 @@ export function createS3StorageGateway({ config, localFallbackDir = null }) {
 
       if (isLocalFallback || !s3Client) {
         return {
-          uploadUrl: `http://localhost:${config.port}/api/storage/local-upload?key=${encodeURIComponent(s3Key)}`,
+          uploadUrl: `${apiBase}/api/storage/local-upload?key=${encodeURIComponent(s3Key)}`,
           s3Key,
           headers: { "Content-Type": contentType || "application/octet-stream" },
         };
@@ -150,7 +151,7 @@ export function createS3StorageGateway({ config, localFallbackDir = null }) {
       const expiresAt = new Date(Date.now() + 3600 * 1000).toISOString();
       if (isLocalFallback || !s3Client) {
         return {
-          url: `http://localhost:${config.port}/api/storage/local-download?key=${encodeURIComponent(s3Key)}&filename=${encodeURIComponent(fileName)}`,
+          url: `${apiBase}/api/storage/local-download?key=${encodeURIComponent(s3Key)}&filename=${encodeURIComponent(fileName)}`,
           expiresAt,
         };
       }
@@ -170,7 +171,7 @@ export function createS3StorageGateway({ config, localFallbackDir = null }) {
       const expiresAt = new Date(Date.now() + 3600 * 1000).toISOString();
       if (isLocalFallback || !s3Client) {
         return {
-          url: `http://localhost:${config.port}/api/storage/local-download?key=${encodeURIComponent(s3Key)}&inline=true`,
+          url: `${apiBase}/api/storage/local-download?key=${encodeURIComponent(s3Key)}&inline=true`,
           expiresAt,
           contentType,
         };
