@@ -38,14 +38,16 @@ export function loadConfig(env = process.env) {
     sessionHours,
     corsOrigins: (env.CORS_ORIGINS || "http://localhost:5173,https://www.uploadhub.work.gd,https://uploadhub.work.gd,http://localhost:4000,http://127.0.0.1:5173").split(",").map((item) => item.trim()).filter(Boolean),
     frontendUrl: (() => {
-      let raw = env.FRONTEND_URL || (production ? "https://www.uploadhub.work.gd" : "http://localhost:5173");
+      const isCloud = production || /uploadhub\.work\.gd/i.test(env.FRONTEND_URL || "") || /uploadhub\.work\.gd/i.test(env.CORS_ORIGINS || "");
+      let raw = env.FRONTEND_URL || (isCloud ? "https://www.uploadhub.work.gd" : "http://localhost:5173");
       if (!/^https?:\/\//i.test(raw)) {
         raw = `https://${raw.replace(/^https?:?\/*/, "")}`;
       }
       return raw.replace(/\/+$/, "");
     })(),
     apiBaseUrl: (() => {
-      let raw = env.API_BASE_URL || (production ? "https://api.uploadhub.work.gd" : `http://localhost:${Number(env.PORT || 4000)}`);
+      const isCloud = production || /uploadhub\.work\.gd/i.test(env.FRONTEND_URL || "") || /uploadhub\.work\.gd/i.test(env.CORS_ORIGINS || "");
+      let raw = env.API_BASE_URL || (isCloud ? "https://api.uploadhub.work.gd" : `http://localhost:${Number(env.PORT || 4000)}`);
       if (!/^https?:\/\//i.test(raw)) {
         raw = `https://${raw.replace(/^https?:?\/*/, "")}`;
       }
