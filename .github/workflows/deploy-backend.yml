@@ -73,17 +73,17 @@ jobs:
 
             cd backend
 
-            # Safety check — .env must exist on the server
+            # Safety check -- .env must exist on the server
             if [ ! -f .env ]; then
               echo "ERROR: backend/.env is missing on EC2. Create it manually and re-run."
               exit 1
             fi
 
-            # Install only production dependencies
+            # Install only production dependencies (--omit=dev replaces deprecated --production flag)
             if [ -f package-lock.json ]; then
-              npm ci --production
+              npm ci --omit=dev
             else
-              npm install --production
+              npm install --omit=dev
             fi
 
             # Gracefully reload if already running, otherwise start fresh
@@ -104,11 +104,11 @@ jobs:
             ")
 
             if [ "$STATUS" != "online" ]; then
-              echo "Deployment FAILED — process status: $STATUS"
+              echo "Deployment FAILED -- process status: $STATUS"
               pm2 logs uploadhub-backend --lines 50 --nostream
               exit 1
             fi
 
-            echo "Deployment SUCCESSFUL — status: $STATUS"
+            echo "Deployment SUCCESSFUL -- status: $STATUS"
             pm2 save
             pm2 status
