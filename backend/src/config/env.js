@@ -28,7 +28,6 @@ export function loadConfig(env = process.env) {
 
   const emailMode = env.EMAIL_MODE || "none";
   if (!["console", "none"].includes(emailMode)) throw new Error('EMAIL_MODE must be "console" or "none".');
-  if (production && emailMode === "console") throw new Error('EMAIL_MODE "console" is for development only.');
 
   return {
     nodeEnv,
