@@ -6,13 +6,13 @@
 
 import useApiData from "../../hooks/useApiData";
 import { api } from "../../lib/api";
-import { Download } from "../../lib/icons";
+import { Download, Share2 } from "../../lib/icons";
 import { formatBytes } from "../../lib/format";
 import Button from "../ui/Button";
 import DataBoundary from "../ui/DataBoundary";
 import Modal from "../ui/Modal";
 
-export default function PreviewDialog({ file, onClose, onDownload }) {
+export default function PreviewDialog({ file, can, onClose, onDownload, onShare }) {
   const result = useApiData(() => (file ? api.files.previewUrl(file.fileId) : Promise.resolve(null)), [file && file.fileId]);
   if (!file) return null;
   const isPdf = file.contentType === "application/pdf";
@@ -25,14 +25,28 @@ export default function PreviewDialog({ file, onClose, onDownload }) {
       description={formatBytes(file.size)}
       size="lg"
       footer={
-        <>
+        <div className="flex w-full items-center justify-between gap-2">
           <Button variant="secondary" onClick={onClose}>
             Close
           </Button>
-          <Button icon={Download} onClick={() => onDownload(file)}>
-            Download
-          </Button>
-        </>
+          <div className="flex items-center gap-2">
+            {onShare && (!can || can("share")) ? (
+              <Button
+                variant="secondary"
+                icon={Share2}
+                onClick={() => {
+                  onClose();
+                  onShare(file);
+                }}
+              >
+                Share
+              </Button>
+            ) : null}
+            <Button icon={Download} onClick={() => onDownload(file)}>
+              Download
+            </Button>
+          </div>
+        </div>
       }
     >
       <DataBoundary result={result} feature="Preview" rows={2}>

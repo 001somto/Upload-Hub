@@ -433,7 +433,15 @@ export default function FileBrowser({ scope = "independent" }) {
 
       <ShareDialog open={Boolean(dialog && dialog.type === "share")} onClose={() => setDialog(null)} target={dialog && dialog.target} />
 
-      {dialog && dialog.type === "preview" ? <PreviewDialog file={dialog.file} onClose={() => setDialog(null)} onDownload={downloadFile} /> : null}
+      {dialog && dialog.type === "preview" ? (
+        <PreviewDialog
+          file={dialog.file}
+          can={can}
+          onClose={() => setDialog(null)}
+          onDownload={downloadFile}
+          onShare={(file) => setDialog({ type: "share", target: { type: "file", id: file.fileId, name: file.name } })}
+        />
+      ) : null}
 
       {dialog && dialog.type === "info" ? (
         <FileInfoDialog
